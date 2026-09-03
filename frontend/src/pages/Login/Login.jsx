@@ -38,48 +38,13 @@ export default function Login({ onLoginSuccess }) {
             onLoginSuccess(data.data);
           }
           navigate('/dashboard');
-        }, 1000);
+        }, 800);
       } else {
-        if (username === 'superadmin' && password === 'superadmin123') {
-          const mockUser = {
-            _id: 'superadmin_1',
-            username: 'superadmin',
-            name: 'Super Admin',
-            role: 'superadmin',
-            token: 'demo_token_superadmin_2026'
-          };
-          setSuccessMsg('Welcome back, Super Admin (SUPERADMIN)!');
-          localStorage.setItem('pydahsoft_user', JSON.stringify(mockUser));
-          setTimeout(() => {
-            if (onLoginSuccess) {
-              onLoginSuccess(mockUser);
-            }
-            navigate('/dashboard');
-          }, 1000);
-        } else {
-          setError(data.message || 'Invalid username or password');
-        }
+        const errorMsg = data.error?.message || data.message || 'Invalid username or password';
+        setError(errorMsg);
       }
     } catch (err) {
-      if (username === 'superadmin' && password === 'superadmin123') {
-        const mockUser = {
-          _id: 'superadmin_1',
-          username: 'superadmin',
-          name: 'Super Admin',
-          role: 'superadmin',
-          token: 'demo_token_superadmin_2026'
-        };
-        setSuccessMsg('Logged in as Super Admin (Offline/Direct Mode)');
-        localStorage.setItem('pydahsoft_user', JSON.stringify(mockUser));
-        setTimeout(() => {
-          if (onLoginSuccess) {
-            onLoginSuccess(mockUser);
-          }
-          navigate('/dashboard');
-        }, 1000);
-      } else {
-        setError('Unable to connect to backend server. Make sure server is running on http://localhost:5000');
-      }
+      setError('Unable to connect to backend server. Please verify backend service is running.');
     } finally {
       setLoading(false);
     }

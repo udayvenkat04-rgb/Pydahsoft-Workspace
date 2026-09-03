@@ -3,6 +3,17 @@ const bcrypt = require('bcryptjs');
 
 const userSchema = new mongoose.Schema(
   {
+    employeeId: {
+      type: String,
+      unique: true,
+      sparse: true,
+      trim: true
+    },
+    name: {
+      type: String,
+      required: [true, 'Name is required'],
+      trim: true
+    },
     username: {
       type: String,
       required: [true, 'Username is required'],
@@ -10,10 +21,27 @@ const userSchema = new mongoose.Schema(
       lowercase: true,
       trim: true
     },
-    name: {
+    email: {
       type: String,
-      required: [true, 'Name is required'],
-      default: 'Super Admin'
+      lowercase: true,
+      trim: true,
+      default: ''
+    },
+    phone: {
+      type: String,
+      default: ''
+    },
+    department: {
+      type: String,
+      default: 'Engineering'
+    },
+    designation: {
+      type: String,
+      default: 'Software Engineer'
+    },
+    joiningDate: {
+      type: Date,
+      default: Date.now
     },
     password: {
       type: String,
@@ -21,8 +49,18 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ['superadmin', 'superior', 'teamlead', 'employee'],
+      required: [true, 'Role is required'],
+      trim: true,
       default: 'employee'
+    },
+    permissions: {
+      type: mongoose.Schema.Types.Mixed,
+      default: undefined
+    },
+    status: {
+      type: String,
+      enum: ['Active', 'Inactive'],
+      default: 'Active'
     }
   },
   {
@@ -30,8 +68,70 @@ const userSchema = new mongoose.Schema(
   }
 );
 
-// Hash password before saving if modified
 userSchema.pre('save', async function (next) {
+  if (this.isNew || this.isModified('role') || !this.permissions) {
+    try {
+      const Role = mongoose.model('Role');
+      const roleDoc = await Role.findOne({ name: this.role.toLowerCase() });
+      if (roleDoc && roleDoc.defaultPermissions) {
+        const defaults = roleDoc.defaultPermissions.toObject
+          ? roleDoc.defaultPermissions.toObject()
+          : roleDoc.defaultPermissions;
+        this.permissions = {
+          ...defaults,
+          ...(this.permissions || {})
+        };
+      } else if (this.role === 'superior' || this.role === 'superadmin') {
+        this.permissions = {
+          canViewOverview: 'write',
+          canViewUsers: 'write',
+          canViewEmployees: 'write',
+          canViewProjects: 'write',
+          canViewTeams: 'write',
+          canViewTimeTracker: 'write',
+          canViewReviews: 'write',
+          canViewDailyPlans: 'write',
+          canViewAnalytics: 'write',
+          canViewAuditLogs: 'write',
+          canViewSettings: 'write',
+          ...(this.permissions || {})
+        };
+      } else if (this.role === 'teamlead') {
+        this.permissions = {
+          canViewOverview: 'write',
+          canViewUsers: 'read',
+          canViewEmployees: 'read',
+          canViewProjects: 'write',
+          canViewTeams: 'write',
+          canViewTimeTracker: 'write',
+          canViewReviews: 'write',
+          canViewDailyPlans: 'write',
+          canViewAnalytics: 'read',
+          canViewAuditLogs: 'none',
+          canViewSettings: 'none',
+          ...(this.permissions || {})
+        };
+      } else {
+        this.permissions = {
+          canViewOverview: 'read',
+          canViewUsers: 'none',
+          canViewEmployees: 'none',
+          canViewProjects: 'none',
+          canViewTeams: 'read',
+          canViewTimeTracker: 'write',
+          canViewReviews: 'none',
+          canViewDailyPlans: 'read',
+          canViewAnalytics: 'read',
+          canViewAuditLogs: 'none',
+          canViewSettings: 'none',
+          ...(this.permissions || {})
+        };
+      }
+    } catch (e) {
+      console.error('[User Pre-Save Role Defaults Error]:', e);
+    }
+  }
+
   if (!this.isModified('password')) {
     return next();
   }
@@ -40,7 +140,6 @@ userSchema.pre('save', async function (next) {
   next();
 });
 
-// Compare password method
 userSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
