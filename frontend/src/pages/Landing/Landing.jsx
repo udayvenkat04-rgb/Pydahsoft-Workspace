@@ -5,7 +5,7 @@ export default function Landing({ user }) {
   const navigate = useNavigate();
 
   return (
-    <main className="min-h-screen overflow-hidden bg-[#f7fcf9] text-[#09233d] font-sans">
+    <main className="landing-background min-h-screen overflow-hidden bg-[#f7fcf9] text-[#09233d] font-sans">
       <div className="relative isolate">
         <div className="pointer-events-none absolute -right-24 top-24 -z-10 h-80 w-80 rounded-full bg-[#dff7e9] opacity-80" />
         <div className="pointer-events-none absolute -left-32 top-[28rem] -z-10 h-80 w-80 rounded-full bg-[#e5f2ee]" />
@@ -69,8 +69,8 @@ export default function Landing({ user }) {
           </div>
 
           <div className="relative min-h-[420px] animate-[fade-up_900ms_150ms_ease-out_both] sm:min-h-[510px]">
-            <div className="absolute right-0 top-4 h-[82%] w-[83%] rounded-[2.5rem] bg-[#d8f5e5]" />
-            <div className="absolute bottom-1 left-0 h-[72%] w-[87%] rounded-[2.5rem] border border-white/80 bg-white/80 p-5 shadow-[0_25px_70px_rgba(28,104,75,0.12)] backdrop-blur-sm sm:p-7">
+            <div className="absolute right-0 top-4 h-[82%] w-[110%] rounded-[2.5rem] bg-[#d8f5e5]" />
+            <div className="absolute bottom-1 left-0 h-[72%] w-[110%] rounded-[2.5rem] border border-white/80 bg-white/80 p-5 shadow-[0_25px_70px_rgba(28,104,75,0.12)] backdrop-blur-sm sm:p-7">
               <div className="flex items-center justify-between border-b border-[#e3f0e9] pb-5">
                 <div>
                   <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#7a929e]">Project control center</p>
@@ -110,6 +110,25 @@ export default function Landing({ user }) {
             </div>
           </div>
         </section>
+
+        <div className="mx-auto grid max-w-7xl grid-cols-2 border-t border-[#dfeee6] px-6 py-8 sm:grid-cols-4 lg:px-10">
+          <div className="border-r border-[#dfeee6] pr-4">
+            <p className="text-2xl font-black text-[#09233d]">12</p>
+            <p className="mt-1 text-xs font-semibold text-[#708794]">Connected modules</p>
+          </div>
+          <div className="border-r border-[#dfeee6] px-4 sm:px-6">
+            <p className="text-2xl font-black text-[#09233d]">360°</p>
+            <p className="mt-1 text-xs font-semibold text-[#708794]">Project visibility</p>
+          </div>
+          <div className="border-r border-[#dfeee6] px-4 sm:px-6">
+            <p className="text-2xl font-black text-[#09233d]">1</p>
+            <p className="mt-1 text-xs font-semibold text-[#708794]">Source of truth</p>
+          </div>
+          <div className="pl-4 sm:pl-6">
+            <p className="text-2xl font-black text-[#09233d]">Live</p>
+            <p className="mt-1 text-xs font-semibold text-[#708794]">Performance signals</p>
+          </div>
+        </div>
       </div>
 
       <section id="about" className="border-y border-[#dfeee6] bg-[#edf9f2]">
@@ -122,24 +141,54 @@ export default function Landing({ user }) {
             The Employee Project, Task & Performance Management System connects every stage of work: a Superior assigns the project, Team Leads shape modules and tasks, and Employees track time, submit work, and build a reliable performance history.
           </p>
         </div>
-      </section>
-
-      <section id="services" className="border-y border-[#dfeee6] bg-white/65">
-        <div className="mx-auto grid max-w-7xl gap-8 px-6 py-12 sm:grid-cols-3 lg:px-10">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#169a61]">Core services</p>
-            <h2 className="mt-3 text-2xl font-extrabold tracking-tight">Work, made visible.</h2>
+        <div className="mx-auto grid max-w-7xl gap-4 px-6 pb-16 sm:grid-cols-3 lg:px-10 lg:pb-24">
+          <div className="border-t border-[#b9dfc8] pt-4">
+            <p className="text-sm font-bold text-[#09233d]">Traceable by design</p>
+            <p className="mt-2 text-sm leading-6 text-[#61798a]">Follow decisions, work, time, and outcomes through one connected record.</p>
           </div>
-          <div>
-            <p className="text-sm font-bold text-[#09233d]">01 / Project & team management</p>
-            <p className="mt-2 text-sm leading-6 text-[#708794]">Assign projects, form teams, and follow progress from one view.</p>
+          <div className="border-t border-[#b9dfc8] pt-4">
+            <p className="text-sm font-bold text-[#09233d]">Built for every role</p>
+            <p className="mt-2 text-sm leading-6 text-[#61798a]">Give leaders oversight while keeping each employee focused on the work ahead.</p>
           </div>
-          <div>
-            <p className="text-sm font-bold text-[#09233d]">02 / Tasks, time & performance</p>
-            <p className="mt-2 text-sm leading-6 text-[#708794]">Track daily work, approvals, hours, KPIs, and reports with confidence.</p>
+          <div className="border-t border-[#b9dfc8] pt-4">
+            <p className="text-sm font-bold text-[#09233d]">Ready for better decisions</p>
+            <p className="mt-2 text-sm leading-6 text-[#61798a]">Turn task and time data into clear progress, useful feedback, and fair performance insight.</p>
           </div>
         </div>
       </section>
+
+      <section id="services" className="border-y border-[#dfeee6] bg-white/65">
+        <div className="mx-auto grid max-w-7xl gap-8 px-6 py-16 sm:grid-cols-2 lg:grid-cols-[0.7fr_1.3fr] lg:px-10 lg:py-24">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#169a61]">Core services</p>
+            <h2 className="mt-3 max-w-xs text-3xl font-black leading-tight tracking-[-0.04em]">Everything your projects need to move.</h2>
+            <p className="mt-4 max-w-sm text-sm leading-6 text-[#708794]">A practical operating layer for planning work, managing people, and learning from delivery.</p>
+          </div>
+          <div className="grid gap-x-8 gap-y-8 sm:grid-cols-2">
+            <div className="border-t border-[#dfeee6] pt-4">
+              <p className="text-sm font-bold text-[#09233d]">01 / Project & team management</p>
+              <p className="mt-2 text-sm leading-6 text-[#708794]">Assign projects, form teams, choose leads, and follow progress from one view.</p>
+            </div>
+            <div className="border-t border-[#dfeee6] pt-4">
+              <p className="text-sm font-bold text-[#09233d]">02 / Modules & daily planning</p>
+              <p className="mt-2 text-sm leading-6 text-[#708794]">Break ambitious goals into manageable modules and clear daily work plans.</p>
+            </div>
+            <div className="border-t border-[#dfeee6] pt-4">
+              <p className="text-sm font-bold text-[#09233d]">03 / Tasks & time tracking</p>
+              <p className="mt-2 text-sm leading-6 text-[#708794]">Capture ownership, deadlines, remarks, evidence, and the actual time spent.</p>
+            </div>
+            <div className="border-t border-[#dfeee6] pt-4">
+              <p className="text-sm font-bold text-[#09233d]">04 / Reviews & performance</p>
+              <p className="mt-2 text-sm leading-6 text-[#708794]">Approve work, surface blockers, and turn delivery history into useful KPIs.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div className="landing-wave-footer" aria-hidden="true">
+        <span className="landing-wave landing-wave-light" />
+        <span className="landing-wave landing-wave-dark" />
+      </div>
     </main>
   );
 }

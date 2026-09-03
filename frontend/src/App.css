@@ -17,6 +17,49 @@
   }
 }
 
+.landing-background {
+  position: relative;
+  isolation: isolate;
+  background:
+    radial-gradient(circle at 85% 8%, rgba(39, 184, 120, 0.24) 1px, transparent 1.5px),
+    radial-gradient(circle at 69% 28%, rgba(178, 230, 203, 0.48), transparent 18rem),
+    #f5fbf7;
+  background-size: 13px 13px, auto, auto;
+}
+
+.landing-background > * {
+  position: relative;
+  z-index: 1;
+}
+
+.landing-wave-footer {
+  position: relative;
+  height: 150px;
+  overflow: hidden;
+  background: #e5f5ec;
+}
+
+.landing-wave {
+  position: absolute;
+  left: -5%;
+  width: 110%;
+  border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+}
+
+.landing-wave-light {
+  bottom: 54px;
+  height: 105px;
+  background: #d4efdf;
+  transform: rotate(-3deg);
+}
+
+.landing-wave-dark {
+  bottom: -42px;
+  height: 105px;
+  background: #174f39;
+  transform: rotate(-2deg);
+}
+
 .hero {
   position: relative;
 
