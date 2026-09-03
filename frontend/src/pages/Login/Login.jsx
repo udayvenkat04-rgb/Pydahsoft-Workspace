@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { API_BASE_URL } from '../../config/api';
 
 export default function Login({ onLoginSuccess }) {
   const navigate = useNavigate();
@@ -16,7 +17,7 @@ export default function Login({ onLoginSuccess }) {
     setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:5000/api/auth/login', {
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -86,10 +87,24 @@ export default function Login({ onLoginSuccess }) {
 
   return (
     <div className="min-h-screen bg-[#f7fcf9] text-[#09233d] flex flex-col justify-between relative overflow-hidden font-sans">
+      <div className="login-background" aria-hidden="true">
+        <div className="login-background__grid" />
+        <div className="login-background__ring login-background__ring--one" />
+        <div className="login-background__ring login-background__ring--two" />
+        <div className="login-background__cube login-background__cube--one">
+          <span /><span /><span /><span /><span /><span />
+        </div>
+        <div className="login-background__cube login-background__cube--two">
+          <span /><span /><span /><span /><span /><span />
+        </div>
+        <span className="login-background__spark login-background__spark--one" />
+        <span className="login-background__spark login-background__spark--two" />
+        <span className="login-background__spark login-background__spark--three" />
+      </div>
       <div className="pointer-events-none absolute -right-24 -top-24 h-96 w-96 rounded-full bg-[#dff7e9] opacity-70 blur-2xl" />
       <div className="pointer-events-none absolute -left-28 bottom-10 h-96 w-96 rounded-full bg-[#e5f2ee] opacity-80 blur-2xl" />
 
-      <header className="flex w-full items-center justify-between px-6 py-6 lg:px-12">
+      <header className="relative z-10 flex w-full items-center justify-between px-6 py-6 lg:px-12">
         <Link to="/" className="flex items-center gap-2.5 text-left focus:outline-none group">
           <span className="grid h-10 w-10 place-items-center rounded-xl bg-[#27b878] text-xl font-black text-white shadow-[0_8px_20px_rgba(39,184,120,0.25)] transition-transform group-hover:scale-105">
             &lt;&gt;
@@ -110,8 +125,24 @@ export default function Login({ onLoginSuccess }) {
         </Link>
       </header>
 
-      <main className="mx-auto my-auto w-full max-w-md px-6 py-8">
-        <div className="rounded-3xl border border-white/80 bg-white/90 p-8 shadow-[0_20px_60px_rgba(15,48,34,0.08)] backdrop-blur-md">
+      <main className="login-stage relative z-10 mx-auto my-auto flex w-full max-w-5xl items-center justify-center px-6 py-8 lg:px-12">
+        <div className="login-scene">
+          <div className="login-prop login-prop--user" aria-hidden="true">
+            <span className="login-prop__user-head" />
+            <span className="login-prop__user-body" />
+          </div>
+          <div className="login-prop login-prop--form" aria-hidden="true">
+            <span className="login-prop__form-bar" />
+            <span className="login-prop__form-line" />
+            <span className="login-prop__form-line login-prop__form-line--short" />
+            <span className="login-prop__form-button" />
+          </div>
+          <div className="login-prop login-prop--lock" aria-hidden="true">
+            <span className="login-prop__lock-shackle" />
+            <span className="login-prop__lock-body"><i /></span>
+          </div>
+
+          <div className="login-card rounded-3xl border border-white/80 bg-white/90 p-8 shadow-[0_20px_60px_rgba(15,48,34,0.08)] backdrop-blur-md">
           <div className="text-center">
             <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#e6f7ef] text-[#169a61]">
               <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -173,15 +204,16 @@ export default function Login({ onLoginSuccess }) {
             </button>
           </form>
 
-          <div className="mt-6 border-t border-[#eaf3ee] pt-4 text-center">
+            <div className="mt-6 border-t border-[#eaf3ee] pt-4 text-center">
             <p className="text-[11px] text-[#78909e]">
               Supported Roles: <span className="font-semibold text-[#09233d]">SuperAdmin</span>, <span className="font-semibold text-[#09233d]">Superior</span>, <span className="font-semibold text-[#09233d]">Team Lead</span>, <span className="font-semibold text-[#09233d]">Employee</span>
             </p>
+            </div>
           </div>
         </div>
       </main>
 
-      <footer className="py-4 text-center text-xs font-medium text-[#79919f]">
+      <footer className="relative z-10 py-4 text-center text-xs font-medium text-[#79919f]">
         PydahSoft &copy; 2026. All rights reserved.
       </footer>
     </div>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_BASE_URL } from '../config/api';
 
 export default function UserManagement() {
   const [users, setUsers] = useState([]);
@@ -11,7 +12,7 @@ export default function UserManagement() {
 
   const fetchUsers = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/users');
+      const res = await fetch(`${API_BASE_URL}/users`);
       const data = await res.json();
       if (data.success) {
         setUsers(data.data);
@@ -31,7 +32,7 @@ export default function UserManagement() {
     setError('');
 
     try {
-      const res = await fetch('http://localhost:5000/api/users', {
+      const res = await fetch(`${API_BASE_URL}/users`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, username, password, role })
