@@ -1,4 +1,5 @@
 const User = require('../models/User');
+const Role = require('../models/Role');
 const jwt = require('jsonwebtoken');
 
 const generateToken = (id, role) => {
@@ -60,13 +61,35 @@ const loginUser = async (username, password) => {
     throw new Error('Invalid credentials');
   }
 
+  if (user.status === 'Inactive') {
+    throw new Error('Account is inactive. Contact your system administrator.');
+  }
+
   const token = generateToken(user._id, user.role);
+
+  // Fetch Role document to merge role default permissions
+  const roleDoc = await Role.findOne({ name: user.role.toLowerCase() });
+  const roleDefaults = roleDoc?.defaultPermissions
+    ? (roleDoc.defaultPermissions.toObject ? roleDoc.defaultPermissions.toObject() : roleDoc.defaultPermissions)
+    : {};
+  const userPerms = user.permissions
+    ? (user.permissions.toObject ? user.permissions.toObject() : user.permissions)
+    : {};
+
+  const effectivePermissions = {
+    ...roleDefaults,
+    ...userPerms
+  };
 
   return {
     _id: user._id,
     username: user.username,
     name: user.name,
     role: user.role,
+    employeeId: user.employeeId,
+    department: user.department,
+    designation: user.designation,
+    permissions: effectivePermissions,
     token
   };
 };

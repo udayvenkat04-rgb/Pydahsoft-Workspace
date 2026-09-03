@@ -1,164 +1,826 @@
 import React, { useState, useEffect } from 'react';
-import { API_BASE_URL } from '../../config/api';
+import { fetchApi } from '../../config/api';
 
-export default function UserManagement() {
+const PAGE_PRIVILEGES_LIST = [
+  { key: 'canViewOverview', label: '📊 Dashboard Overview Page', path: '/dashboard/overview' },
+  { key: 'canViewUsers', label: '🔑 User Accounts & Credentials Page', path: '/dashboard/users' },
+  { key: 'canViewEmployees', label: '👥 Employee Directory & Staff Profiles Page', path: '/dashboard/employees' },
+  { key: 'canViewProjects', label: '📁 Projects & Modules Page', path: '/dashboard/projects' },
+  { key: 'canViewTeams', label: '🏢 Teams & Tasks Management Page', path: '/dashboard/teams' },
+  { key: 'canViewTimeTracker', label: '⏱️ Interactive Time Tracker Page', path: '/dashboard/time-tracker' },
+  { key: 'canViewReviews', label: '✅ Task Approvals & Reviews Queue Page', path: '/dashboard/reviews' },
+  { key: 'canViewDailyPlans', label: '📅 Daily Work Plans Page', path: '/dashboard/daily-plans' },
+  { key: 'canViewAnalytics', label: '📈 Performance Analytics & Reports Page', path: '/dashboard/analytics' },
+  { key: 'canViewAuditLogs', label: '🛡️ System Audit Trail Logs Page', path: '/dashboard/audit-logs' },
+  { key: 'canViewSettings', label: '⚙️ System Settings & Role Privileges Page', path: '/dashboard/settings' }
+];
+
+export default function UserManagement({ currentUser }) {
   const [users, setUsers] = useState([]);
-  const [name, setName] = useState('');
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [role, setRole] = useState('employee');
-  const [message, setMessage] = useState('');
+  const [roles, setRoles] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  
+  // Modals
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showRoleModal, setShowRoleModal] = useState(false);
+  const [viewingUser, setViewingUser] = useState(null);
+  const [editingUser, setEditingUser] = useState(null);
+  const [selectedUserPrivileges, setSelectedUserPrivileges] = useState(null);
 
-  const fetchUsers = async () => {
+  // User Creation Form State
+  const [createForm, setCreateForm] = useState({
+    employeeId: '',
+    name: '',
+    username: '',
+    email: '',
+    phone: '',
+    department: 'Engineering',
+    designation: 'Software Engineer',
+    joiningDate: new Date().toISOString().split('T')[0],
+    role: 'employee',
+    password: '',
+    status: 'Active'
+  });
+
+  // Custom Role Creation Form State
+  const [roleForm, setRoleForm] = useState({
+    name: '',
+    label: '',
+    defaultPermissions: {
+      canViewOverview: 'write',
+      canViewUsers: 'none',
+      canViewEmployees: 'none',
+      canViewProjects: 'write',
+      canViewTeams: 'write',
+      canViewTimeTracker: 'write',
+      canViewReviews: 'read',
+      canViewDailyPlans: 'read',
+      canViewAnalytics: 'read',
+      canViewAuditLogs: 'none',
+      canViewSettings: 'none'
+    }
+  });
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    setLoading(true);
+    setError('');
     try {
-      const res = await fetch(`${API_BASE_URL}/users`);
-      const data = await res.json();
-      if (data.success) {
-        setUsers(data.data);
+      const [usersRes, rolesRes] = await Promise.all([
+        fetchApi('/users'),
+        fetchApi('/roles')
+      ]);
+      setUsers(usersRes.data);
+      setRoles(rolesRes.data);
+      if (rolesRes.data.length > 0 && !createForm.role) {
+        setCreateForm(prev => ({ ...prev, role: rolesRes.data[0].name }));
       }
     } catch (err) {
-      console.error('Failed to fetch users:', err);
+      setError(err.message || 'Failed to fetch user accounts and dynamic roles');
+    } finally {
+      setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
+  const getEffectivePermissions = (userObj, rolesList) => {
+    const roleName = (userObj.role || 'employee').toLowerCase();
+    const roleDoc = rolesList.find(r => r.name.toLowerCase() === roleName);
+    const defaults = roleDoc?.defaultPermissions || {};
+    return {
+      ...defaults,
+      ...(userObj.permissions || {})
+    };
+  };
 
   const handleCreateUser = async (e) => {
     e.preventDefault();
-    setMessage('');
-    setError('');
-
     try {
-      const res = await fetch(`${API_BASE_URL}/users`, {
+      await fetchApi('/users', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, username, password, role })
+        body: JSON.stringify(createForm)
       });
-      const data = await res.json();
-
-      if (res.ok && data.success) {
-        setMessage(`User "${name}" created successfully!`);
-        setName('');
-        setUsername('');
-        setPassword('');
-        setRole('employee');
-        fetchUsers();
-      } else {
-        setError(data.message || 'Failed to create user');
-      }
+      setShowCreateModal(false);
+      setCreateForm({
+        employeeId: '',
+        name: '',
+        username: '',
+        email: '',
+        phone: '',
+        department: 'Engineering',
+        designation: 'Software Engineer',
+        joiningDate: new Date().toISOString().split('T')[0],
+        role: roles[0]?.name || 'employee',
+        password: '',
+        status: 'Active'
+      });
+      loadData();
     } catch (err) {
-      setError('Unable to reach backend API');
+      alert(`Failed to create user account: ${err.message}`);
     }
   };
 
+  const handleCreateRole = async (e) => {
+    e.preventDefault();
+    try {
+      await fetchApi('/roles', {
+        method: 'POST',
+        body: JSON.stringify(roleForm)
+      });
+      setShowRoleModal(false);
+      setRoleForm({
+        name: '',
+        label: '',
+        defaultPermissions: {
+          canViewOverview: 'write',
+          canViewUsers: 'none',
+          canViewEmployees: 'none',
+          canViewProjects: 'write',
+          canViewTeams: 'write',
+          canViewTimeTracker: 'write',
+          canViewReviews: 'read',
+          canViewDailyPlans: 'read',
+          canViewAnalytics: 'read',
+          canViewAuditLogs: 'none',
+          canViewSettings: 'none'
+        }
+      });
+      loadData();
+    } catch (err) {
+      alert(`Failed to create custom role: ${err.message}`);
+    }
+  };
+
+  const handleUpdateUser = async (e) => {
+    e.preventDefault();
+    if (!editingUser) return;
+    try {
+      await fetchApi(`/users/${editingUser._id}`, {
+        method: 'PUT',
+        body: JSON.stringify(editingUser)
+      });
+      setEditingUser(null);
+      loadData();
+    } catch (err) {
+      alert(`Failed to update user: ${err.message}`);
+    }
+  };
+
+  const handleSavePermissions = async (userId, updatedPermissions) => {
+    try {
+      await fetchApi(`/users/${userId}`, {
+        method: 'PUT',
+        body: JSON.stringify({ permissions: updatedPermissions })
+      });
+      setSelectedUserPrivileges(null);
+      loadData();
+    } catch (err) {
+      alert(`Failed to update privileges: ${err.message}`);
+    }
+  };
+
+  const setBulkUserPermissions = (level) => {
+    if (!selectedUserPrivileges) return;
+    const updated = { ...selectedUserPrivileges.permissions };
+    PAGE_PRIVILEGES_LIST.forEach((p) => {
+      updated[p.key] = level;
+    });
+    setSelectedUserPrivileges({ ...selectedUserPrivileges, permissions: updated });
+  };
+
+  const setUserPermissionLevel = (permissionKey, level) => {
+    if (!selectedUserPrivileges) return;
+    setSelectedUserPrivileges({
+      ...selectedUserPrivileges,
+      permissions: {
+        ...selectedUserPrivileges.permissions,
+        [permissionKey]: level
+      }
+    });
+  };
+
+  const handleToggleStatus = async (userObj) => {
+    const newStatus = userObj.status === 'Inactive' ? 'Active' : 'Inactive';
+    if (newStatus === 'Inactive' && !window.confirm(`Deactivate @${userObj.username}'s account?`)) return;
+    try {
+      await fetchApi(`/users/${userObj._id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ status: newStatus })
+      });
+      loadData();
+    } catch (err) {
+      alert(`Error changing account status: ${err.message}`);
+    }
+  };
+
+  const isManager = currentUser?.role === 'superior' || currentUser?.role === 'superadmin';
+
   return (
-    <div className="p-6 max-w-5xl mx-auto space-y-6">
-      <h2 className="text-2xl font-bold text-[#09233d]">User Creation & Management</h2>
+    <div className="space-y-4">
+      {isManager && (
+        <div className="flex justify-end gap-2">
+          <button
+            onClick={() => setShowRoleModal(true)}
+            className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold shadow-sm hover:bg-indigo-700 transition-all flex items-center gap-1.5"
+          >
+            + Add Custom Role
+          </button>
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="px-4 py-2 bg-[#20b875] text-white rounded-xl text-xs font-bold shadow-sm hover:bg-[#169e63] transition-all flex items-center gap-1.5"
+          >
+            + Create User Account
+          </button>
+        </div>
+      )}
 
-      <div className="bg-white p-6 rounded border border-gray-300 shadow-sm">
-        <h3 className="text-lg font-bold mb-4 text-[#09233d]">Create New User</h3>
+      {error && (
+        <div className="p-4 bg-red-50 text-red-600 rounded-xl text-xs font-semibold">{error}</div>
+      )}
 
-        {message && <div className="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 text-sm font-semibold rounded">{message}</div>}
-        {error && <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 text-sm font-semibold rounded">{error}</div>}
-
-        <form onSubmit={handleCreateUser} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-xs font-bold text-gray-700 mb-1">Full Name</label>
-            <input
-              type="text"
-              required
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. John Doe"
-              className="w-full border border-gray-300 rounded p-2 text-sm"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-bold text-gray-700 mb-1">Username</label>
-            <input
-              type="text"
-              required
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="e.g. johndoe"
-              className="w-full border border-gray-300 rounded p-2 text-sm"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-bold text-gray-700 mb-1">Password</label>
-            <input
-              type="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Password"
-              className="w-full border border-gray-300 rounded p-2 text-sm"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-bold text-gray-700 mb-1">Role</label>
-            <select
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-              className="w-full border border-gray-300 rounded p-2 text-sm bg-white"
-            >
-              <option value="employee">Employee</option>
-              <option value="teamlead">Team Lead</option>
-              <option value="superior">Superior</option>
-              <option value="superadmin">SuperAdmin</option>
-            </select>
-          </div>
-
-          <div className="md:col-span-2 pt-2">
-            <button
-              type="submit"
-              className="bg-[#20b875] text-white font-bold px-5 py-2 rounded text-sm hover:bg-[#159e63]"
-            >
-              Create User
-            </button>
-          </div>
-        </form>
-      </div>
-
-      <div className="bg-white p-6 rounded border border-gray-300 shadow-sm">
-        <h3 className="text-lg font-bold mb-4 text-[#09233d]">Registered Users ({users.length})</h3>
-        {users.length === 0 ? (
-          <p className="text-sm text-gray-500">No users found. Create one above.</p>
-        ) : (
+      {loading ? (
+        <div className="p-8 text-center text-xs font-semibold text-gray-500">Loading user accounts...</div>
+      ) : (
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-sm">
+            <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-gray-100 border-b border-gray-300">
-                  <th className="p-3 font-bold">Name</th>
-                  <th className="p-3 font-bold">Username</th>
-                  <th className="p-3 font-bold">Role</th>
-                  <th className="p-3 font-bold">Created At</th>
+                <tr className="bg-gray-50 border-b border-gray-100 text-[11px] font-bold uppercase tracking-wider text-gray-500">
+                  <th className="p-4">Emp ID</th>
+                  <th className="p-4">Full Name & Username</th>
+                  <th className="p-4">Department & Role</th>
+                  <th className="p-4">Allowed Sidebar Pages</th>
+                  <th className="p-4">Status</th>
+                  <th className="p-4 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody>
-                {users.map((u) => (
-                  <tr key={u._id} className="border-b border-gray-200 hover:bg-gray-50">
-                    <td className="p-3 font-semibold">{u.name}</td>
-                    <td className="p-3 text-gray-600">{u.username}</td>
-                    <td className="p-3">
-                      <span className="bg-blue-100 text-blue-800 text-xs font-bold px-2 py-0.5 rounded uppercase">
-                        {u.role}
-                      </span>
-                    </td>
-                    <td className="p-3 text-gray-500 text-xs">{new Date(u.createdAt).toLocaleDateString()}</td>
-                  </tr>
-                ))}
+              <tbody className="divide-y divide-gray-100 text-xs">
+                {users.map((u) => {
+                  const isSuperAdmin = u.role === 'superadmin';
+                  const perms = getEffectivePermissions(u, roles);
+                  const activePermCount = isSuperAdmin ? 11 : PAGE_PRIVILEGES_LIST.filter(p => perms[p.key] !== 'none' && perms[p.key] !== false).length;
+                  const isInactive = u.status === 'Inactive';
+
+                  return (
+                    <tr key={u._id} className="hover:bg-gray-50/60">
+                      <td className="p-4 font-bold text-[#20b875]">{u.employeeId || 'EMP-000'}</td>
+                      <td className="p-4">
+                        <strong className="block text-[#09233d] font-bold">{u.name}</strong>
+                        <span className="text-[11px] text-gray-400">@{u.username}</span>
+                      </td>
+                      <td className="p-4">
+                        <span className="font-semibold text-gray-700 block">{u.department || 'Engineering'}</span>
+                        <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase mt-0.5 inline-block ${
+                          u.role === 'superior' ? 'bg-purple-100 text-purple-800' :
+                          u.role === 'teamlead' ? 'bg-blue-100 text-blue-800' :
+                          isSuperAdmin ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'
+                        }`}>
+                          {u.role}
+                        </span>
+                      </td>
+                      <td className="p-4">
+                        <span className="px-2.5 py-1 bg-gray-100 text-gray-700 font-bold rounded-lg text-[10px]">
+                          🛡️ {activePermCount} / 11 Pages {isSuperAdmin ? '(Full Access)' : 'Allowed'}
+                        </span>
+                      </td>
+                      <td className="p-4">
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                          !isInactive ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-600'
+                        }`}>
+                          {u.status || 'Active'}
+                        </span>
+                      </td>
+                      <td className="p-4 text-right space-x-1.5 whitespace-nowrap">
+                        <button
+                          onClick={() => setViewingUser(u)}
+                          className="px-2.5 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-[11px] font-bold"
+                        >
+                          👁️ View
+                        </button>
+
+                        {isManager && (
+                          <button
+                            onClick={() => setEditingUser({ ...u })}
+                            className="px-2.5 py-1 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg text-[11px] font-bold"
+                          >
+                            ✏️ Edit
+                          </button>
+                        )}
+
+                        <button
+                          onClick={() => setSelectedUserPrivileges({
+                            ...u,
+                            permissions: getEffectivePermissions(u, roles)
+                          })}
+                          className="px-2.5 py-1 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-lg text-[11px] font-bold border border-indigo-200"
+                        >
+                          ⚙️ Page Privileges
+                        </button>
+
+                        {isManager && !isSuperAdmin && (
+                          isInactive ? (
+                            <button
+                              onClick={() => handleToggleStatus(u)}
+                              className="px-2.5 py-1 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-lg text-[11px] font-bold border border-emerald-200"
+                            >
+                              ✓ Activate
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleToggleStatus(u)}
+                              className="px-2.5 py-1 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg text-[11px] font-bold"
+                            >
+                              Deactivate
+                            </button>
+                          )
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
-        )}
-      </div>
+        </div>
+      )}
+
+      {/* SIDEBAR PAGE ACCESS CONTROL MODAL */}
+      {selectedUserPrivileges && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-3xl p-6 max-w-lg w-full shadow-2xl border border-gray-100 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center border-b pb-3">
+              <div>
+                <h3 className="text-base font-bold text-[#09233d]">Sidebar Page Access: {selectedUserPrivileges.name}</h3>
+                <p className="text-[11px] text-gray-500">Configure Read vs Write permission levels for @{selectedUserPrivileges.username}</p>
+              </div>
+              <button onClick={() => setSelectedUserPrivileges(null)} className="text-xs font-bold text-gray-400 hover:text-gray-600">✕</button>
+            </div>
+
+            {selectedUserPrivileges.role === 'superadmin' ? (
+              <div className="p-4 bg-amber-50 rounded-2xl border border-amber-200 text-xs text-amber-900 font-semibold space-y-1">
+                <p className="font-bold">👑 Full SuperAdmin Access Enabled</p>
+                <p className="text-[11px] text-amber-800">SuperAdmin accounts possess unrestricted Read & Write access to all system pages.</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {/* Master Bulk Control Bar */}
+                <div className="flex items-center justify-between bg-gray-50 p-2.5 rounded-xl border border-gray-100 text-xs">
+                  <span className="font-bold text-gray-700 text-[11px]">Master Toggles:</span>
+                  <div className="flex gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setBulkUserPermissions('read')}
+                      className="px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-[10px] font-bold border border-blue-200"
+                    >
+                      👁️ Select All Read
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setBulkUserPermissions('write')}
+                      className="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg text-[10px] font-bold border border-emerald-200"
+                    >
+                      ✏️ Select All Write
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setBulkUserPermissions('none')}
+                      className="px-2.5 py-1 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-[10px] font-bold"
+                    >
+                      🚫 Clear All
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-2 text-xs max-h-72 overflow-y-auto pr-1">
+                  {PAGE_PRIVILEGES_LIST.map((page) => {
+                    const rawVal = selectedUserPrivileges.permissions?.[page.key];
+                    const currentLevel = rawVal === 'write' || rawVal === true ? 'write' : (rawVal === 'read' ? 'read' : 'none');
+
+                    return (
+                      <div key={page.key} className="flex items-center justify-between p-2.5 bg-gray-50 rounded-xl hover:bg-gray-100/80 border border-gray-100">
+                        <div>
+                          <span className="font-bold text-gray-900 block">{page.label}</span>
+                          <small className="text-gray-400 font-mono text-[10px]">{page.path}</small>
+                        </div>
+                        <div className="flex gap-1">
+                          <button
+                            type="button"
+                            onClick={() => setUserPermissionLevel(page.key, 'none')}
+                            className={`px-2 py-1 rounded text-[10px] font-bold transition-all ${
+                              currentLevel === 'none' ? 'bg-gray-300 text-gray-800 shadow-sm' : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
+                            }`}
+                          >
+                            None
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setUserPermissionLevel(page.key, 'read')}
+                            className={`px-2 py-1 rounded text-[10px] font-bold transition-all ${
+                              currentLevel === 'read' ? 'bg-blue-600 text-white shadow-sm' : 'bg-blue-50 text-blue-600 hover:bg-blue-100'
+                            }`}
+                          >
+                            Read
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setUserPermissionLevel(page.key, 'write')}
+                            className={`px-2 py-1 rounded text-[10px] font-bold transition-all ${
+                              currentLevel === 'write' ? 'bg-[#20b875] text-white shadow-sm' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                            }`}
+                          >
+                            Write
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            <div className="flex justify-end gap-2 pt-2 border-t">
+              <button
+                type="button"
+                onClick={() => setSelectedUserPrivileges(null)}
+                className="px-4 py-2 border border-gray-200 rounded-xl text-xs font-bold text-gray-600"
+              >
+                Close
+              </button>
+              {selectedUserPrivileges.role !== 'superadmin' && (
+                <button
+                  type="button"
+                  onClick={() => handleSavePermissions(selectedUserPrivileges._id, selectedUserPrivileges.permissions)}
+                  className="px-4 py-2 bg-[#20b875] text-white rounded-xl text-xs font-bold hover:bg-[#169e63]"
+                >
+                  Save Page Access Privileges
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* CREATE CUSTOM ROLE MODAL */}
+      {showRoleModal && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-3xl p-6 max-w-lg w-full shadow-2xl border border-gray-100 max-h-[90vh] overflow-y-auto space-y-4">
+            <div className="flex justify-between items-center border-b pb-3">
+              <h3 className="text-base font-bold text-[#09233d]">Create Custom Role</h3>
+              <button onClick={() => setShowRoleModal(false)} className="text-xs font-bold text-gray-400 hover:text-gray-600">✕</button>
+            </div>
+
+            <form onSubmit={handleCreateRole} className="space-y-3">
+              <div>
+                <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">Role Key Identifier</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. qa_engineer"
+                  value={roleForm.name}
+                  onChange={(e) => setRoleForm({ ...roleForm, name: e.target.value.toLowerCase().replace(/\s+/g, '_') })}
+                  className="w-full border border-gray-200 rounded-xl p-2.5 text-xs font-medium focus:border-[#20b875] focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">Role Display Label</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. QA & Test Engineer"
+                  value={roleForm.label}
+                  onChange={(e) => setRoleForm({ ...roleForm, label: e.target.value })}
+                  className="w-full border border-gray-200 rounded-xl p-2.5 text-xs font-medium focus:border-[#20b875] focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-gray-600 uppercase mb-2">Default Sidebar Page Privileges</label>
+                <div className="space-y-2 text-xs max-h-48 overflow-y-auto p-2 bg-gray-50 rounded-xl">
+                  {PAGE_PRIVILEGES_LIST.map((page) => (
+                    <label key={page.key} className="flex items-center justify-between p-2 bg-white rounded-lg border border-gray-100 cursor-pointer">
+                      <span className="font-semibold text-gray-800">{page.label}</span>
+                      <select
+                        value={roleForm.defaultPermissions[page.key] || 'none'}
+                        onChange={(e) => setRoleForm({
+                          ...roleForm,
+                          defaultPermissions: { ...roleForm.defaultPermissions, [page.key]: e.target.value }
+                        })}
+                        className="text-xs border rounded p-1"
+                      >
+                        <option value="none">None</option>
+                        <option value="read">Read</option>
+                        <option value="write">Write</option>
+                      </select>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t">
+                <button
+                  type="button"
+                  onClick={() => setShowRoleModal(false)}
+                  className="px-4 py-2 border border-gray-200 rounded-xl text-xs font-bold text-gray-600"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold hover:bg-indigo-700 shadow-md"
+                >
+                  Save Custom Role
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* CREATE USER DIALOG */}
+      {showCreateModal && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-3xl p-6 max-w-lg w-full shadow-2xl border border-gray-100 max-h-[90vh] overflow-y-auto">
+            <h3 className="text-base font-bold text-[#09233d] mb-4">Create New User Account</h3>
+            <form onSubmit={handleCreateUser} className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">1. Employee ID</label>
+                  <input
+                    type="text"
+                    value={createForm.employeeId}
+                    onChange={(e) => setCreateForm({ ...createForm, employeeId: e.target.value })}
+                    placeholder="e.g. EMP005 (Auto if blank)"
+                    className="w-full border border-gray-200 rounded-xl p-2.5 text-xs font-medium focus:border-[#20b875] focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">2. Full Name</label>
+                  <input
+                    type="text"
+                    required
+                    value={createForm.name}
+                    onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
+                    placeholder="e.g. John Doe"
+                    className="w-full border border-gray-200 rounded-xl p-2.5 text-xs font-medium focus:border-[#20b875] focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">3. Username</label>
+                  <input
+                    type="text"
+                    required
+                    value={createForm.username}
+                    onChange={(e) => setCreateForm({ ...createForm, username: e.target.value })}
+                    placeholder="e.g. johndoe"
+                    className="w-full border border-gray-200 rounded-xl p-2.5 text-xs font-medium focus:border-[#20b875] focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">4. Email Address</label>
+                  <input
+                    type="email"
+                    value={createForm.email}
+                    onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })}
+                    placeholder="john@pydahsoft.com"
+                    className="w-full border border-gray-200 rounded-xl p-2.5 text-xs font-medium focus:border-[#20b875] focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">5. Phone Number</label>
+                  <input
+                    type="text"
+                    value={createForm.phone}
+                    onChange={(e) => setCreateForm({ ...createForm, phone: e.target.value })}
+                    placeholder="+1234567890"
+                    className="w-full border border-gray-200 rounded-xl p-2.5 text-xs font-medium focus:border-[#20b875] focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">6. Department</label>
+                  <input
+                    type="text"
+                    value={createForm.department}
+                    onChange={(e) => setCreateForm({ ...createForm, department: e.target.value })}
+                    placeholder="Engineering"
+                    className="w-full border border-gray-200 rounded-xl p-2.5 text-xs font-medium focus:border-[#20b875] focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">7. Designation</label>
+                  <input
+                    type="text"
+                    value={createForm.designation}
+                    onChange={(e) => setCreateForm({ ...createForm, designation: e.target.value })}
+                    placeholder="Software Engineer"
+                    className="w-full border border-gray-200 rounded-xl p-2.5 text-xs font-medium focus:border-[#20b875] focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">8. Joining Date</label>
+                  <input
+                    type="date"
+                    value={createForm.joiningDate}
+                    onChange={(e) => setCreateForm({ ...createForm, joiningDate: e.target.value })}
+                    className="w-full border border-gray-200 rounded-xl p-2.5 text-xs font-medium focus:border-[#20b875] focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">9. System Role</label>
+                  <select
+                    value={createForm.role}
+                    onChange={(e) => setCreateForm({ ...createForm, role: e.target.value })}
+                    className="w-full border border-gray-200 rounded-xl p-2.5 text-xs font-medium focus:border-[#20b875] focus:outline-none bg-white"
+                  >
+                    {roles.map((r) => (
+                      <option key={r.name} value={r.name}>{r.label || r.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">10. Password</label>
+                  <input
+                    type="password"
+                    required
+                    value={createForm.password}
+                    onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })}
+                    placeholder="••••••••"
+                    className="w-full border border-gray-200 rounded-xl p-2.5 text-xs font-medium focus:border-[#20b875] focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">11. Account Status</label>
+                  <select
+                    value={createForm.status}
+                    onChange={(e) => setCreateForm({ ...createForm, status: e.target.value })}
+                    className="w-full border border-gray-200 rounded-xl p-2.5 text-xs font-medium focus:border-[#20b875] focus:outline-none bg-white"
+                  >
+                    <option value="Active">Active</option>
+                    <option value="Inactive">Inactive</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-4 border-t">
+                <button
+                  type="button"
+                  onClick={() => setShowCreateModal(false)}
+                  className="px-4 py-2 border border-gray-200 rounded-xl text-xs font-bold text-gray-600"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 bg-[#20b875] text-white rounded-xl text-xs font-bold hover:bg-[#169e63]"
+                >
+                  Create User Account
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* VIEW USER DETAILS MODAL */}
+      {viewingUser && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-gray-100 space-y-4">
+            <div className="flex justify-between items-center border-b pb-3">
+              <h3 className="text-base font-bold text-[#09233d]">User Details: {viewingUser.name}</h3>
+              <button onClick={() => setViewingUser(null)} className="text-xs font-bold text-gray-400 hover:text-gray-600">✕</button>
+            </div>
+            <div className="space-y-2 text-xs">
+              <div className="flex justify-between py-1 border-b"><span className="text-gray-500 font-medium">Employee ID:</span><strong className="text-[#20b875]">{viewingUser.employeeId || 'N/A'}</strong></div>
+              <div className="flex justify-between py-1 border-b"><span className="text-gray-500 font-medium">Username:</span><strong className="text-gray-800">@{viewingUser.username}</strong></div>
+              <div className="flex justify-between py-1 border-b"><span className="text-gray-500 font-medium">Email:</span><strong className="text-gray-800">{viewingUser.email || 'N/A'}</strong></div>
+              <div className="flex justify-between py-1 border-b"><span className="text-gray-500 font-medium">Phone:</span><strong className="text-gray-800">{viewingUser.phone || 'N/A'}</strong></div>
+              <div className="flex justify-between py-1 border-b"><span className="text-gray-500 font-medium">Department:</span><strong className="text-gray-800">{viewingUser.department}</strong></div>
+              <div className="flex justify-between py-1 border-b"><span className="text-gray-500 font-medium">Designation:</span><strong className="text-gray-800">{viewingUser.designation}</strong></div>
+              <div className="flex justify-between py-1 border-b"><span className="text-gray-500 font-medium">Joining Date:</span><strong className="text-gray-800">{new Date(viewingUser.joiningDate || viewingUser.createdAt).toLocaleDateString()}</strong></div>
+              <div className="flex justify-between py-1 border-b"><span className="text-gray-500 font-medium">System Role:</span><span className="font-bold text-purple-700 uppercase">{viewingUser.role}</span></div>
+              <div className="flex justify-between py-1"><span className="text-gray-500 font-medium">Account Status:</span><span className="font-bold text-emerald-700">{viewingUser.status || 'Active'}</span></div>
+            </div>
+            <button onClick={() => setViewingUser(null)} className="w-full py-2 bg-gray-100 text-gray-700 font-bold rounded-xl text-xs">Close</button>
+          </div>
+        </div>
+      )}
+
+      {/* EDIT USER MODAL */}
+      {editingUser && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-gray-100">
+            <h3 className="text-base font-bold text-[#09233d] mb-4">Edit User Account</h3>
+            <form onSubmit={handleUpdateUser} className="space-y-3">
+              <div>
+                <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">Full Name</label>
+                <input
+                  type="text"
+                  required
+                  value={editingUser.name}
+                  onChange={(e) => setEditingUser({ ...editingUser, name: e.target.value })}
+                  className="w-full border border-gray-200 rounded-xl p-2.5 text-xs font-medium focus:border-[#20b875] focus:outline-none"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">Email</label>
+                  <input
+                    type="email"
+                    value={editingUser.email || ''}
+                    onChange={(e) => setEditingUser({ ...editingUser, email: e.target.value })}
+                    className="w-full border border-gray-200 rounded-xl p-2.5 text-xs font-medium focus:border-[#20b875] focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">Phone</label>
+                  <input
+                    type="text"
+                    value={editingUser.phone || ''}
+                    onChange={(e) => setEditingUser({ ...editingUser, phone: e.target.value })}
+                    className="w-full border border-gray-200 rounded-xl p-2.5 text-xs font-medium focus:border-[#20b875] focus:outline-none"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">Department</label>
+                  <input
+                    type="text"
+                    value={editingUser.department || ''}
+                    onChange={(e) => setEditingUser({ ...editingUser, department: e.target.value })}
+                    className="w-full border border-gray-200 rounded-xl p-2.5 text-xs font-medium focus:border-[#20b875] focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">Designation</label>
+                  <input
+                    type="text"
+                    value={editingUser.designation || ''}
+                    onChange={(e) => setEditingUser({ ...editingUser, designation: e.target.value })}
+                    className="w-full border border-gray-200 rounded-xl p-2.5 text-xs font-medium focus:border-[#20b875] focus:outline-none"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">System Role</label>
+                  <select
+                    value={editingUser.role}
+                    onChange={(e) => setEditingUser({ ...editingUser, role: e.target.value })}
+                    className="w-full border border-gray-200 rounded-xl p-2.5 text-xs font-medium focus:border-[#20b875] focus:outline-none bg-white"
+                  >
+                    {roles.map((r) => (
+                      <option key={r.name} value={r.name}>{r.label || r.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">Account Status</label>
+                  <select
+                    value={editingUser.status || 'Active'}
+                    onChange={(e) => setEditingUser({ ...editingUser, status: e.target.value })}
+                    className="w-full border border-gray-200 rounded-xl p-2.5 text-xs font-medium focus:border-[#20b875] focus:outline-none bg-white"
+                  >
+                    <option value="Active">Active</option>
+                    <option value="Inactive">Inactive</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3">
+                <button
+                  type="button"
+                  onClick={() => setEditingUser(null)}
+                  className="px-4 py-2 border border-gray-200 rounded-xl text-xs font-bold text-gray-600"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-[#20b875] text-white rounded-xl text-xs font-bold hover:bg-[#169e63]"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

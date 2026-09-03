@@ -2,6 +2,11 @@ const mongoose = require('mongoose');
 
 const taskSchema = new mongoose.Schema(
   {
+    taskId: {
+      type: String,
+      unique: true,
+      trim: true
+    },
     title: {
       type: String,
       required: [true, 'Task title is required'],
@@ -11,31 +16,68 @@ const taskSchema = new mongoose.Schema(
       type: String,
       default: ''
     },
+    module: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Module',
+      required: [true, 'Parent module reference is required']
+    },
     project: {
-      type: String,
-      default: 'General'
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Project',
+      default: null
+    },
+    team: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Team',
+      default: null
     },
     assignedTo: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
-      required: [true, 'Assigned user is required']
+      required: [true, 'Assigned employee is required']
     },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User'
+      ref: 'User',
+      required: [true, 'Creator user is required']
     },
     priority: {
       type: String,
       enum: ['Low', 'Medium', 'High', 'Critical'],
       default: 'Medium'
     },
-    status: {
-      type: String,
-      enum: ['Pending', 'In Progress', 'Under Review', 'Completed'],
-      default: 'Pending'
+    startDate: {
+      type: Date,
+      default: Date.now
     },
     dueDate: {
       type: Date
+    },
+    estimatedHours: {
+      type: Number,
+      default: 0
+    },
+    actualHours: {
+      type: Number,
+      default: 0
+    },
+    status: {
+      type: String,
+      enum: [
+        'Not Started',
+        'In Progress',
+        'Paused',
+        'Submitted for Review',
+        'Approved',
+        'Rejected',
+        'Delayed',
+        'Blocked'
+      ],
+      default: 'Not Started'
+    },
+    remarks: {
+      type: String,
+      default: ''
     }
   },
   {
