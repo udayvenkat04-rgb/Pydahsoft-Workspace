@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_BASE_URL } from '../../config/api';
 
 export default function TaskAssignment() {
   const [tasks, setTasks] = useState([]);
@@ -8,7 +9,7 @@ export default function TaskAssignment() {
   const fetchTasks = async () => {
     setLoading(true);
     try {
-      const res = await fetch('http://localhost:5000/api/tasks');
+      const res = await fetch(`${API_BASE_URL}/tasks`);
       const data = await res.json();
       if (data.success) {
         setTasks(data.data);
@@ -26,7 +27,7 @@ export default function TaskAssignment() {
 
   const handleStatusChange = async (taskId, newStatus) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/tasks/${taskId}`, {
+      const res = await fetch(`${API_BASE_URL}/tasks/${taskId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus })
