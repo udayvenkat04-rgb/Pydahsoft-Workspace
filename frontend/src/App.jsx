@@ -6,7 +6,7 @@ function App() {
       <div className="relative isolate">
         <div className="pointer-events-none absolute -right-24 top-24 -z-10 h-80 w-80 rounded-full bg-[#dff7e9] opacity-80" />
         <div className="pointer-events-none absolute -left-32 top-[28rem] -z-10 h-80 w-80 rounded-full bg-[#e5f2ee]" />
-        <header className="mx-auto flex max-w-7xl items-center justify-between px-6 py-7 lg:px-10">
+        <header className="flex w-full items-center justify-between px-6 py-7 lg:px-10 xl:px-14">
           <a href="#top" className="flex items-center gap-2.5" aria-label="PydahSoft home">
             <span className="grid h-10 w-10 place-items-center rounded-xl bg-[#27b878] text-xl font-black text-white shadow-[0_8px_20px_rgba(39,184,120,0.2)]">&lt;&gt;</span>
             <span className="leading-none"><strong className="block text-lg font-extrabold tracking-[-0.04em]">PydahSoft</strong><small className="mt-1 block text-[8px] font-bold uppercase tracking-[0.18em] text-[#577080]">innovations that matters</small></span>
