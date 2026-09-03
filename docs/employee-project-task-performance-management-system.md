@@ -1,6 +1,6 @@
 Contents
 
-Employee Project, Task & Performance Management System  1
+# Employee Project, Task & Performance Management System
 
 System Requirements & Design Documentation . . . . . . . . . . . . . . . . . . . . . 1
 
@@ -29,12 +29,12 @@ System Requirements & Design Documentation . . . . . . . . . . . . . . . . . . .
 Employee Project, Task & Performance Management Sys-
 tem
 
-System Requirements & Design Documentation
+## System Requirements & Design Documentation
 
 Version: 1.0 Prepared for: Internal Project Planning Document Type: Functional & Tech-
 nical Specification
 
-1. Executive Summary
+## 1. Executive Summary
 
 This system manages a company’s projects across their entire lifecycle — from the moment
 a Superior assigns a project, through team formation, daily task execution, time tracking, and
@@ -52,7 +52,7 @@ Time Tracking, and Employee Performance Analytics Platform. Every entity in the
 system is traceable back to the project it originated from and forward to the performance
 data it produces — nothing exists in isolation.
 
-2. Objectives
+## 2. Objectives
 
     • Give a Superior full visibility from project assignment down to individual task-level effort.
     • Give Team Leads the tools to break projects into modules and tasks, assign daily work,
@@ -69,11 +69,11 @@ data it produces — nothing exists in isolation.
 • Preserve full historical/audit trail so any data point can be traced back to who did what,
    when, and how long it took.
 
-3. Roles & Permissions
+## 3. Roles & Permissions
 
 The system is built around three primary roles, each with a distinct scope of responsibility.
 
-3.1 Superior / Manager
+### 3.1 Superior / Manager
 Highest level of project-management authority.
 
 Capability                                                               Description
@@ -95,7 +95,7 @@ Generate Reports                                                         Estimat
                                                                          Export/generate reports at any level of the
                                                                          hierarchy
 
-3.2 Team Lead
+### 3.2 Team Lead
 Manages the team assigned to a specific project.
 
 Capability                                                               Description
@@ -113,7 +113,7 @@ Approve/Reject Completed Work                                            Quality
 Monitor Module Progress                                                  Roll-up view of module completion
 View Team Performance                                                    Team-level KPI dashboard
 
-3.3 Team Member / Employee
+### 3.3 Team Member / Employee
 Executes assigned work.
 
                                                                       2
@@ -131,7 +131,7 @@ Upload Work/Evidence  Attach files/screenshots as proof of work, if
 View Task History     Personal history of all past tasks
 View Own Performance  Personal KPI dashboard
 
-4. Role Hierarchy & Access Model
+## 4. Role Hierarchy & Access Model
 
                                       ┌───────────────┐
                                       │ Superior │ (Full org visibility)
@@ -152,7 +152,17 @@ View Own Performance  Personal KPI dashboard
 Access is strictly role-based (RBAC): a Team Lead can only see teams/projects they are as-
 signed to; an Employee can only see and act on tasks assigned to them.
 
-5. Major System Modules
+```mermaid
+flowchart TD
+    Superior[Superior / Manager<br/>Full organization visibility]
+    Lead[Team Lead<br/>Assigned project and team]
+    Employee[Team Member / Employee<br/>Assigned tasks only]
+
+    Superior -->|Assigns project and team| Lead
+    Lead -->|Creates and assigns tasks| Employee
+```
+
+## 5. Major System Modules
 
 The application is organized into 12 core modules:
 
@@ -172,20 +182,20 @@ The application is organized into 12 core modules:
 Each is detailed below.
 
                                                                       3
-Module 1 — Authentication & Authorization
+### Module 1 — Authentication & Authorization
 
     • Login / Logout
     • Role-based access control (Superior / Team Lead / Employee)
     • Password management (reset, change, policy enforcement)
     • Session management (JWT-based, with secure HTTP-only cookies)
 
-Module 2 — Employee Management
+### Module 2 — Employee Management
 
 Central directory of all company employees.
 Employee record fields: - Employee ID - Name - Email - Phone - Department - Designation
 - Joining Date - Role (Superior / Team Lead / Employee) - Account Status (Active / Inactive)
 
-Module 3 — Team Management
+### Module 3 — Team Management
 
 Formation and administration of teams.
 
@@ -195,7 +205,7 @@ Team Lead - View team details
 Team record fields: Team ID, Team Name, Team Lead, Members[], Associated Project(s),
 Status.
 
-Module 4 — Project Management
+### Module 4 — Project Management
 
 Where the entire chain begins. The Superior creates and assigns a project.
 
@@ -203,7 +213,7 @@ Project record fields: - Project ID - Project Name - Description - Client / Depa
 applicable) - Assigned Team - Start Date - Deadline - Priority (Low / Medium / High) - Status:
 Not Started → In Progress → On Hold → Completed → Cancelled - Overall Progress %
 
-Module 5 — Project Module Management
+### Module 5 — Project Module Management
 
 Large projects are broken into logical modules (e.g., “User Authentication,” “Payment Gate-
 way,” “Reporting Dashboard”).
@@ -211,7 +221,7 @@ way,” “Reporting Dashboard”).
 Module record fields: - Module Name - Description - Assigned Employees - Start Date -
 Expected Completion Date - Estimated Hours - Actual Hours - Status - Progress %
 
-Module 6 — Task Management
+### Module 6 — Task Management
 Each project module is broken into individual tasks, created and assigned by the Team Lead.
 
 Field              Purpose
@@ -232,7 +242,7 @@ Status             Current lifecycle state
 Field       Purpose
 Remarks     Notes, blockers, context
 
-Module 7 — Daily Task Assignment
+### Module 7 — Daily Task Assignment
 Directly addresses the need to see what each employee is doing, each day.
 Each day, the Team Lead builds a Daily Work Plan:
 
@@ -244,7 +254,7 @@ Employee B  Task 15 – UI Review           2h             Medium    Pending
 This gives the Team Lead a single-page view of the entire team’s day, and rolls up into
 weekly/monthly views for the Superior.
 
-Module 8 — Time Tracking
+### Module 8 — Time Tracking
 
 Directly addresses the requirement: “task taken in which time and how much time will be
 taken.”
@@ -256,7 +266,7 @@ And compares: - Estimated vs. Actual hours (per task, per module, per employee, 
 project)
 This data feeds directly into the Performance module.
 
-Module 9 — Task Status Management
+### Module 9 — Task Status Management
 
 A richer status model than simple Completed/Not Completed:
     • Not Started
@@ -270,7 +280,7 @@ A richer status model than simple Completed/Not Completed:
 
 This gives far more useful tracking granularity than a binary status.
 
-Module 10 — Project Progress Tracking
+### Module 10 — Project Progress Tracking
 
 Progress rolls up the hierarchy:
 
@@ -282,7 +292,7 @@ Task Progress → Module Progress → Project Progress
 This gives Superiors a live, accurate view of where every project stands without needing
 manual status updates.
 
-Module 11 — Employee Performance
+### Module 11 — Employee Performance
 
 When a Superior or Team Lead selects an employee, they see a consolidated performance
 profile:
@@ -294,21 +304,21 @@ profile:
 
        quality (approval/rejection ratio)
 
-Module 12 — Performance Analytics & Reports
+### Module 12 — Performance Analytics & Reports
 
 The analytics layer that turns raw data into decisions.
 The Superior can select a scope (employee / team / project / date range) and view: - Daily
 performance trends - Monthly performance trends - Task distribution (by priority, by status,
 by employee) - Time utilization heatmaps - Exportable reports (PDF / Excel / CSV)
 
-6. Recommended Page / Screen Structure
+## 6. Recommended Page / Screen Structure
 
-6.1 Public / Authentication
+### 6.1 Public / Authentication
 
     • Login
     • Forgot Password / Reset Password
 
-6.2 Superior Pages
+### 6.2 Superior Pages
 
     • Superior Dashboard (central landing page — see §7)
     • All Projects
@@ -321,7 +331,7 @@ by employee) - Time utilization heatmaps - Exportable reports (PDF / Excel / CSV
     • Reports & Analytics
     • Settings
 
-6.3 Team Lead Pages
+### 6.3 Team Lead Pages
 
     • Team Lead Dashboard
     • My Project(s)
@@ -332,7 +342,7 @@ by employee) - Time utilization heatmaps - Exportable reports (PDF / Excel / CSV
     • Team Performance
 
                                                                       6
-6.4 Employee Pages
+### 6.4 Employee Pages
 
     • Employee Dashboard
     • My Tasks
@@ -340,7 +350,7 @@ by employee) - Time utilization heatmaps - Exportable reports (PDF / Excel / CSV
     • Task History
     • My Performance
 
-7. Superior Dashboard (Central Hub)
+## 7. Superior Dashboard (Central Hub)
 
 The Superior Dashboard is the most important page in the system — a single-screen summary
 of the entire organization’s project health.
@@ -349,7 +359,7 @@ layed/blocked task counts) - Team performance leaderboard - Time utilization sum
 (estimated vs. actual, org-wide) - Pending approvals count - Recent activity feed - Quick-
 access report generation
 
-8. Core Database Relationships (Entity Overview)
+## 8. Core Database Relationships (Entity Overview)
 
 Employee ──< TeamMembership >── Team
 Team ──< assigned to >── Project (assigned by Superior)
@@ -365,7 +375,24 @@ AuditLog: entity_type, entity_id, action, performed_by, timestamp, old_value, ne
 This history layer is essential — it lets a Superior reconstruct exactly what an employee did
 and when, at any point in the project’s lifecycle.
 
-9. Complete System Workflow
+```mermaid
+erDiagram
+    EMPLOYEE ||--o{ TEAM_MEMBERSHIP : joins
+    TEAM ||--o{ TEAM_MEMBERSHIP : contains
+    TEAM ||--o{ PROJECT : receives
+    EMPLOYEE ||--o{ PROJECT : assigns
+    TEAM ||--|| EMPLOYEE : has_team_lead
+    PROJECT ||--o{ PROJECT_MODULE : contains
+    PROJECT_MODULE ||--o{ TASK : contains
+    EMPLOYEE ||--o{ TASK : performs
+    TASK ||--o{ TIME_ENTRY : records
+    TASK ||--o{ REMARK : has
+    TASK ||--o{ ATTACHMENT : includes
+    EMPLOYEE ||--o{ PERFORMANCE_RECORD : generates
+    AUDIT_LOG }o--|| EMPLOYEE : performed_by
+```
+
+## 9. Complete System Workflow
 
    1. Superior creates a Project and defines its scope, timeline, and priority.
    2. Superior creates/selects a Team and assigns a Team Lead.
@@ -385,7 +412,23 @@ and when, at any point in the project’s lifecycle.
 12. Superior and Team Lead access Reports & Analytics at any point — by employee,
       team, project, or time period.
 
-11. Recommended Architecture
+```mermaid
+flowchart TD
+    Create[Superior creates project] --> Assign[Select team and assign Team Lead]
+    Assign --> Plan[Team Lead creates modules and tasks]
+    Plan --> Daily[Build daily work plan]
+    Daily --> Work[Employee starts task and tracks time]
+    Work --> Submit[Employee submits completed work]
+    Submit --> Review{Team Lead review}
+    Review -->|Approve| Rollup[Roll up task progress]
+    Review -->|Reject| Rework[Rework required]
+    Rework --> Work
+    Rollup --> Module[Update module progress]
+    Module --> Project[Update project progress]
+    Project --> Analytics[Update performance analytics and reports]
+```
+
+## 11. Recommended Architecture
 
 A modular, layered architecture is recommended:
 
@@ -423,7 +466,18 @@ This separation keeps business rules (like progress roll-up and performance scor
 pendent of both the API routing and the database layer, making the system easier to test and
 extend.
 
-12. Naming Recommendation
+```mermaid
+flowchart TB
+    UI[Presentation Layer<br/>React dashboards and forms]
+    API[API Layer<br/>Express REST endpoints]
+    Logic[Business Logic Layer<br/>Validation, status, progress, scoring]
+    Data[Data Access Layer<br/>Prisma]
+    DB[(Database<br/>PostgreSQL)]
+
+    UI --> API --> Logic --> Data --> DB
+```
+
+## 12. Naming Recommendation
 
 Rather than positioning this as a simple “Task Management System,” it is recommended to
 frame it as:
