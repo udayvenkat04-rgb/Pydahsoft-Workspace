@@ -227,17 +227,6 @@ export default function Landing({ user }) {
 
             {/* Completely Transparent Container (No card background, No borders) */}
             <div className="relative w-full bg-transparent p-0 hero-card-3d">
-              {/* Floating Live Badge */}
-              <div className="absolute top-2 right-2 z-20 flex items-center gap-2 bg-[#09233d]/85 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-emerald-400/40 shadow-lg">
-                <span className="relative flex h-2.5 w-2.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#20b875] opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#20b875]"></span>
-                </span>
-                <span className="text-[11px] font-black uppercase tracking-wider text-emerald-300">
-                  ⚡ Live Execution Flow
-                </span>
-              </div>
-
               {/* Seamless Transparent Presenter & Flowchart Image */}
               <div className="relative overflow-visible group flex justify-center">
                 <img
