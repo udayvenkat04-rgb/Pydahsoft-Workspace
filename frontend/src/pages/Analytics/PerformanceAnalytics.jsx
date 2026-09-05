@@ -23,6 +23,19 @@ export default function PerformanceAnalytics({ currentUser }) {
     }
   };
 
+  const isManager = currentUser?.role === 'superior' || currentUser?.role === 'superadmin';
+  const currentUserId = (currentUser?._id || currentUser?.id)?.toString();
+
+  const displayedRecords = isManager
+    ? records
+    : records.filter((rec) => {
+        if (currentUser?.role === 'employee') {
+          const empId = (typeof rec.employee === 'object' ? rec.employee?._id : rec.employee)?.toString();
+          return empId === currentUserId;
+        }
+        return true;
+      });
+
   return (
     <div className="space-y-4">
 
@@ -32,6 +45,10 @@ export default function PerformanceAnalytics({ currentUser }) {
 
       {loading ? (
         <div className="p-8 text-center text-xs font-semibold text-gray-500">Loading performance data...</div>
+      ) : displayedRecords.length === 0 ? (
+        <div className="p-8 bg-white rounded-2xl border border-gray-100 shadow-sm text-center text-xs font-medium text-gray-500">
+          No performance records found for your employee profile.
+        </div>
       ) : (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
@@ -49,7 +66,7 @@ export default function PerformanceAnalytics({ currentUser }) {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 text-xs">
-                {records.map((rec) => (
+                {displayedRecords.map((rec) => (
                   <tr key={rec._id} className="hover:bg-gray-50/60">
                     <td className="p-4">
                       <strong className="block text-[#09233d] font-bold">{rec.employee?.name}</strong>

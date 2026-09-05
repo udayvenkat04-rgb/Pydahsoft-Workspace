@@ -26,6 +26,18 @@ const getPerformanceAnalytics = async (req, res) => {
       }
     }
 
+    if (req.user.role === 'employee') {
+      filter.employee = req.user._id;
+    } else if (req.user.role === 'teamlead') {
+      const teamsLed = await Team.find({ $or: [{ teamLead: req.user._id }, { members: req.user._id }] });
+      const memberIds = new Set();
+      teamsLed.forEach(t => {
+        if (t.teamLead) memberIds.add(t.teamLead.toString());
+        (t.members || []).forEach(m => memberIds.add(m.toString()));
+      });
+      filter.employee = { $in: Array.from(memberIds) };
+    }
+
     const records = await PerformanceRecord.find(filter)
       .populate('employee', 'name username employeeId department designation role')
       .sort({ performanceScore: -1 });

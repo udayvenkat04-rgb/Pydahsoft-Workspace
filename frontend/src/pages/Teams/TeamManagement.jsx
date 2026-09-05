@@ -82,9 +82,20 @@ export default function TeamManagement({ currentUser }) {
     }
   };
 
+  const isManager = currentUser?.role === 'superior' || currentUser?.role === 'superadmin';
+  const currentUserId = (currentUser?._id || currentUser?.id)?.toString();
+
+  const displayedTeams = isManager
+    ? teams
+    : teams.filter((team) => {
+        const leadId = (typeof team.teamLead === 'object' ? team.teamLead?._id : team.teamLead)?.toString();
+        const memberIds = (team.members || []).map((m) => (typeof m === 'object' ? m?._id : m)?.toString());
+        return (leadId && leadId === currentUserId) || (memberIds && memberIds.includes(currentUserId));
+      });
+
   return (
     <div className="space-y-4">
-      {(currentUser?.role === 'superior' || currentUser?.role === 'superadmin') && (
+      {isManager && (
         <div className="flex justify-end">
           <button
             onClick={() => setShowCreateModal(true)}
@@ -101,9 +112,13 @@ export default function TeamManagement({ currentUser }) {
 
       {loading ? (
         <div className="p-8 text-center text-xs font-semibold text-gray-500">Loading teams...</div>
+      ) : displayedTeams.length === 0 ? (
+        <div className="p-8 bg-white rounded-2xl border border-gray-100 shadow-sm text-center text-xs font-medium text-gray-500">
+          No assigned teams found for your employee profile.
+        </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {teams.map((team) => (
+          {displayedTeams.map((team) => (
             <div key={team._id} className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm space-y-3">
               <div className="flex justify-between items-start border-b pb-3 border-gray-100">
                 <div>
@@ -116,7 +131,7 @@ export default function TeamManagement({ currentUser }) {
                   <span className="text-[10px] font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full uppercase">
                     {team.status || 'Active'}
                   </span>
-                  {(currentUser?.role === 'superior' || currentUser?.role === 'superadmin') && (
+                  {isManager && (
                     <>
                       <button
                         onClick={() => setEditingTeam({ ...team })}

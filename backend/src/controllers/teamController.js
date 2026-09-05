@@ -66,8 +66,8 @@ const getTeams = async (req, res) => {
     if (status) filter.status = status;
     if (teamLead) filter.teamLead = teamLead;
 
-    // If Team Lead role, restricted to teams led or joined
-    if (req.user.role === 'teamlead') {
+    // If user is not superior/superadmin (e.g. employee, teamlead), restrict to teams led or joined by the user
+    if (req.user.role !== 'superior' && req.user.role !== 'superadmin') {
       filter.$or = [{ teamLead: req.user._id }, { members: req.user._id }];
     }
 
