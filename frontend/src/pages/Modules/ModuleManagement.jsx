@@ -84,6 +84,15 @@ export default function ModuleManagement({ currentUser }) {
     }
   };
 
+  const handleDeleteModule = async (moduleId) => {
+    try {
+      await fetchApi(`/modules/${moduleId}`, { method: 'DELETE' });
+      loadData();
+    } catch (err) {
+      alert(`Failed to remove module: ${err.message}`);
+    }
+  };
+
   const openCreateForProject = (projId) => {
     setFormData((prev) => ({ ...prev, project: projId }));
     setShowModal(true);
@@ -237,15 +246,24 @@ export default function ModuleManagement({ currentUser }) {
                           <div className="flex justify-between items-center pt-2 border-t border-gray-100 text-[11px]">
                             <span className="text-gray-500">Est: <strong className="text-gray-700">{mod.estimatedHours || 0}h</strong></span>
                             {canManageModules && (
-                              <button
-                                onClick={() => {
-                                  setAssigningModule(mod);
-                                  setSelectedTeamId(mod.assignedTeam?._id || '');
-                                }}
-                                className="px-2.5 py-1 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-lg font-bold"
-                              >
-                                🤝 Assign Team
-                              </button>
+                              <div className="flex items-center gap-1">
+                                <button
+                                  onClick={() => {
+                                    setAssigningModule(mod);
+                                    setSelectedTeamId(mod.assignedTeam?._id || '');
+                                  }}
+                                  className="px-2.5 py-1 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-lg font-bold"
+                                >
+                                  🤝 Assign Team
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteModule(mod._id)}
+                                  className="px-2 py-1 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg font-bold border border-red-100"
+                                  title="Remove Module"
+                                >
+                                  🗑️ Remove
+                                </button>
+                              </div>
                             )}
                           </div>
                         </div>

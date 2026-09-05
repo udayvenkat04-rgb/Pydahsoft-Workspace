@@ -237,7 +237,7 @@ const updateModule = async (req, res) => {
 const deleteModule = async (req, res) => {
   try {
     const { id } = req.params;
-    const moduleDoc = await Module.findByIdAndDelete(id);
+    const moduleDoc = await Module.findById(id);
     if (!moduleDoc) {
       return res.status(404).json({
         success: false,
@@ -245,18 +245,28 @@ const deleteModule = async (req, res) => {
       });
     }
 
+    const projectId = moduleDoc.project;
+
     if (moduleDoc.assignedTeam) {
       await Team.findByIdAndUpdate(moduleDoc.assignedTeam, { $pull: { assignedModules: moduleDoc._id } });
     }
 
     await Task.deleteMany({ module: id });
-    await recalculateProjectProgress(moduleDoc.project);
+    await Module.findByIdAndDelete(id);
+
+    if (projectId) {
+      try {
+        await recalculateProjectProgress(projectId);
+      } catch (err) {
+        console.error('[Progress Recalc Warning]:', err.message);
+      }
+    }
 
     await logAudit({
       entityType: 'Module',
       entityId: id,
       action: 'DELETE_MODULE',
-      performedBy: req.user._id
+      performedBy: req.user ? req.user._id : null
     });
 
     res.status(200).json({
@@ -264,6 +274,7 @@ const deleteModule = async (req, res) => {
       message: 'Module and associated tasks deleted successfully'
     });
   } catch (error) {
+    console.error('[deleteModule error]:', error);
     res.status(500).json({
       success: false,
       error: { message: error.message || 'Error deleting module' }
