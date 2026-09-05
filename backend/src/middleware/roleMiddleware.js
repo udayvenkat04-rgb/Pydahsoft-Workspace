@@ -33,7 +33,7 @@ const authorizePermission = (permissionKey, requireWrite = false) => {
       });
     }
 
-    if (req.user.role === 'superadmin') {
+    if (req.user.role === 'superadmin' || req.user.role === 'superior') {
       return next();
     }
 
