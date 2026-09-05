@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>PydahSoft — flow field background</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #f2fbf6; font-family: -apple-system, "Segoe UI", sans-serif; overflow: hidden; }
+  #bg-canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  .hero {
+    position: relative; z-index: 2; height: 100vh;
+    display: flex; flex-direction: column; justify-content: center;
+    padding: 0 8vw; color: #0a2418;
+  }
+  .eyebrow { color: #0f9d63; font-size: 13px; letter-spacing: 1px; margin-bottom: 18px; font-weight: 500; }
+  h1 { font-size: clamp(40px, 6vw, 80px); line-height: 1.05; font-weight: 800; max-width: 780px; }
+  h1 span { color: #0f9d63; }
+  p.sub { margin-top: 22px; max-width: 520px; font-size: 18px; line-height: 1.6; color: #45604f; }
+  .cta {
+    margin-top: 34px; display: inline-block; width: fit-content;
+    background: #16a34a; color: #f2fbf6; font-weight: 700;
+    padding: 14px 28px; border-radius: 999px; font-size: 15px;
+    box-shadow: 0 10px 30px rgba(22,163,74,0.25);
+  }
+</style>
+</head>
+<body>
+<canvas id="bg-canvas"></canvas>
+
+<script>
+const canvas = document.getElementById('bg-canvas');
+const ctx = canvas.getContext('2d');
+let W, H;
+
+function resize() {
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener('resize', resize);
+
+function fade() {
+  ctx.fillStyle = 'rgba(242, 251, 246, 0.06)';
+  ctx.fillRect(0, 0, W, H);
+}
+ctx.fillStyle = '#f2fbf6';
+ctx.fillRect(0, 0, W, H);
+
+function hash(x, y) {
+  const s = Math.sin(x * 127.1 + y * 311.7) * 43758.5453123;
+  return s - Math.floor(s);
+}
+function noise2(x, y) {
+  const xi = Math.floor(x), yi = Math.floor(y);
+  const xf = x - xi, yf = y - yi;
+  const a = hash(xi, yi), b = hash(xi + 1, yi);
+  const c = hash(xi, yi + 1), d = hash(xi + 1, yi + 1);
+  const u = xf * xf * (3 - 2 * xf), v = yf * yf * (3 - 2 * yf);
+  return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v;
+}
+
+let mouseX = W / 2, mouseY = H / 2, mouseActive = false;
+window.addEventListener('mousemove', (e) => {
+  mouseX = e.clientX; mouseY = e.clientY; mouseActive = true;
+});
+
+const PARTICLE_COUNT = 700;
+const particles = [];
+const colors = ['#0f9d63', '#3fb884', '#7ecda5', '#bfe6d3'];
+
+function resetParticle(p) {
+  p.x = Math.random() * W;
+  p.y = Math.random() * H;
+  p.life = 0;
+  p.maxLife = 120 + Math.random() * 200;
+  p.color = colors[Math.floor(Math.random() * colors.length)];
+  p.width = Math.random() < 0.15 ? 1.6 : 0.7;
+}
+
+for (let i = 0; i < PARTICLE_COUNT; i++) {
+  const p = {};
+  resetParticle(p);
+  p.life = Math.random() * p.maxLife;
+  particles.push(p);
+}
+
+const SCALE = 0.0028;
+let t = 0;
+
+function animate() {
+  fade();
+  t += 0.0025;
+
+  particles.forEach(p => {
+    const angle = noise2(p.x * SCALE, p.y * SCALE + t) * Math.PI * 4;
+    let vx = Math.cos(angle) * 1.15;
+    let vy = Math.sin(angle) * 1.15;
+
+    if (mouseActive) {
+      const dx = p.x - mouseX, dy = p.y - mouseY;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      if (dist < 160) {
+        const force = (1 - dist / 160) * 1.6;
+        vx += (dx / (dist + 0.01)) * force;
+        vy += (dy / (dist + 0.01)) * force;
+      }
+    }
+
+    const px = p.x, py = p.y;
+    p.x += vx;
+    p.y += vy;
+    p.life++;
+
+    const fadeIn = Math.min(p.life / 20, 1);
+    const fadeOut = Math.min((p.maxLife - p.life) / 30, 1);
+    const alpha = Math.max(0, Math.min(fadeIn, fadeOut)) * 0.55;
+
+    ctx.strokeStyle = p.color;
+    ctx.globalAlpha = alpha;
+    ctx.lineWidth = p.width;
+    ctx.beginPath();
+    ctx.moveTo(px, py);
+    ctx.lineTo(p.x, p.y);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+
+    if (p.life > p.maxLife || p.x < -20 || p.x > W + 20 || p.y < -20 || p.y > H + 20) {
+      resetParticle(p);
+    }
+  });
+
+  requestAnimationFrame(animate);
+}
+animate();
+</script>
+</body>
+</html>
