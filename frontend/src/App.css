@@ -17,19 +17,49 @@
   }
 }
 
+#bg-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: -1;
+}
+
 .landing-background {
   position: relative;
   isolation: isolate;
-  background:
-    radial-gradient(circle at 85% 8%, rgba(39, 184, 120, 0.24) 1px, transparent 1.5px),
-    radial-gradient(circle at 69% 28%, rgba(178, 230, 203, 0.48), transparent 18rem),
-    #f5fbf7;
-  background-size: 13px 13px, auto, auto;
+  background: transparent;
 }
 
 .landing-background > * {
   position: relative;
   z-index: 1;
+}
+
+/* 3D Floating Presenter Hero Card */
+.hero-card-3d-wrapper {
+  perspective: 1200px;
+}
+
+.hero-card-3d {
+  transform-style: preserve-3d;
+  animation: hero-card-float 6s ease-in-out infinite;
+  transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1), box-shadow 0.6s ease;
+}
+
+.hero-card-3d:hover {
+  transform: rotateX(4deg) rotateY(-5deg) translateZ(25px) scale(1.02);
+  box-shadow: 0 35px 80px -15px rgba(32, 184, 117, 0.35);
+}
+
+@keyframes hero-card-float {
+  0%, 100% {
+    transform: rotateX(2deg) rotateY(-3deg) translate3d(0, 0px, 15px);
+  }
+  50% {
+    transform: rotateX(-2deg) rotateY(3deg) translate3d(0, -14px, 25px);
+  }
 }
 
 .landing-wave-footer {
