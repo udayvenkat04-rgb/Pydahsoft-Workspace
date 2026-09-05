@@ -1,11 +1,41 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
-const presenterImg = '/project_leadership_presenter.jpg';
+const presenterImg = '/project_leadership_presenter.png';
 
 export default function Landing({ user }) {
   const navigate = useNavigate();
   const canvasRef = useRef(null);
+  const [processedImg, setProcessedImg] = useState(null);
+
+  useEffect(() => {
+    const img = new Image();
+    img.src = presenterImg;
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+
+      const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const data = imgData.data;
+
+      for (let i = 0; i < data.length; i += 4) {
+        const r = data[i];
+        const g = data[i + 1];
+        const b = data[i + 2];
+
+        // Make solid white background pixels 100% transparent
+        if (r > 235 && g > 235 && b > 235) {
+          data[i + 3] = 0;
+        }
+      }
+
+      ctx.putImageData(imgData, 0, 0);
+      setProcessedImg(canvas.toDataURL('image/png'));
+    };
+  }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -190,15 +220,15 @@ export default function Landing({ user }) {
             </div>
           </div>
 
-          {/* Transparent 3D Executive Presenter Image Container */}
+          {/* Seamless Transparent Executive Presenter & Holographic Flowchart */}
           <div className="relative min-h-[500px] animate-[fade-up_900ms_150ms_ease-out_both] sm:min-h-[560px] flex items-center justify-center hero-card-3d-wrapper">
-            {/* Background Holographic Glow */}
-            <div className="absolute right-2 top-2 h-[90%] w-[100%] rounded-[2.5rem] bg-gradient-to-tr from-[#20b875]/30 via-[#3fb884]/20 to-transparent blur-3xl animate-pulse" />
+            {/* Ambient Holographic Glow */}
+            <div className="absolute right-0 top-0 h-full w-full rounded-[2.5rem] bg-gradient-to-tr from-[#20b875]/25 via-[#3fb884]/15 to-transparent blur-3xl animate-pulse pointer-events-none" />
 
-            {/* Transparent 3D Card Container */}
+            {/* Completely Transparent Container (No card background, No borders) */}
             <div className="relative w-full bg-transparent p-0 hero-card-3d">
-              {/* Badge Overlay */}
-              <div className="absolute top-4 right-4 z-20 flex items-center gap-2 bg-[#09233d]/85 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-emerald-400/40 shadow-lg">
+              {/* Floating Live Badge */}
+              <div className="absolute top-2 right-2 z-20 flex items-center gap-2 bg-[#09233d]/85 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-emerald-400/40 shadow-lg">
                 <span className="relative flex h-2.5 w-2.5">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#20b875] opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#20b875]"></span>
@@ -208,16 +238,13 @@ export default function Landing({ user }) {
                 </span>
               </div>
 
-              {/* Seamless Transparent Executive Presenter Image */}
-              <div className="relative overflow-hidden rounded-[2rem] group">
+              {/* Seamless Transparent Presenter & Flowchart Image */}
+              <div className="relative overflow-visible group flex justify-center">
                 <img
-                  src={presenterImg}
+                  src={processedImg || presenterImg}
                   alt="Executive Presenter & Holographic Architecture Flowchart"
-                  className="w-full h-auto rounded-[2rem] object-cover transition-transform duration-700 group-hover:scale-[1.02]"
+                  className="w-full h-auto max-h-[520px] object-contain transition-transform duration-700 group-hover:scale-[1.02] drop-shadow-[0_20px_40px_rgba(20,154,97,0.25)]"
                 />
-
-                {/* Subtle Interactive Shimmer Highlight */}
-                <div className="pointer-events-none absolute inset-0 rounded-[2rem] bg-gradient-to-tr from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
               </div>
             </div>
           </div>
