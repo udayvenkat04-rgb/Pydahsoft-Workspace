@@ -9,7 +9,7 @@ const { protect } = require('../middleware/authMiddleware');
 const { authorize } = require('../middleware/roleMiddleware');
 
 router.use(protect);
-router.use(authorize('superior', 'teamlead', 'superadmin'));
+router.use(authorize('superior', 'teamlead', 'superadmin', 'employee'));
 
 router.get('/performance', getPerformanceAnalytics);
 router.get('/time-utilization', getTimeUtilization);

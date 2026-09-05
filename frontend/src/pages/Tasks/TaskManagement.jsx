@@ -119,6 +119,15 @@ export default function TaskManagement({ currentUser }) {
   };
 
   const canCreateTasks = isManager || currentUser?.permissions?.canCreateTasks !== false;
+  const currentUserId = (currentUser?._id || currentUser?.id)?.toString();
+
+  const displayedTasks = isManager
+    ? tasks
+    : tasks.filter((task) => {
+        const assigneeId = (typeof task.assignedTo === 'object' ? task.assignedTo?._id : task.assignedTo)?.toString();
+        const creatorId = (typeof task.createdBy === 'object' ? task.createdBy?._id : task.createdBy)?.toString();
+        return (assigneeId && assigneeId === currentUserId) || (creatorId && creatorId === currentUserId);
+      });
 
   return (
     <div className="space-y-4">
@@ -144,6 +153,10 @@ export default function TaskManagement({ currentUser }) {
 
       {loading ? (
         <div className="p-8 text-center text-xs font-semibold text-gray-500">Loading tasks...</div>
+      ) : displayedTasks.length === 0 ? (
+        <div className="p-8 bg-white rounded-2xl border border-gray-100 shadow-sm text-center text-xs font-medium text-gray-500">
+          No assigned tasks found for your employee profile.
+        </div>
       ) : (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
@@ -160,7 +173,7 @@ export default function TaskManagement({ currentUser }) {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 text-xs">
-                {tasks.map((task) => (
+                {displayedTasks.map((task) => (
                   <tr key={task._id} className="hover:bg-gray-50/60">
                     <td className="p-4">
                       <span className="text-[10px] font-bold text-[#20b875] bg-emerald-50 px-2 py-0.5 rounded mr-1">
